@@ -1,9 +1,9 @@
 //============================================================================
 // Name        : hamfilter.cpp
-// Author      : 
-// Version     :
-// Copyright   : Your copyright notice
-// Description : Hello World in C++, Ansi-style
+// Author      : Matt Gumbley
+// Version     : 1.0
+// Copyright   : All rights reserved, all wrongs denied.
+// Description : Noise/bandpass filter for CW/SSB.
 //============================================================================
 
 #include <iostream>
