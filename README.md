@@ -21,6 +21,7 @@ install --mode=755)
 
 
 To build hamfilter:
+cd src
 make
 
 
