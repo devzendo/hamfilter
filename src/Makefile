@@ -18,12 +18,12 @@ LDFLAGS=-L/usr/local/lib
 
 all: hamfilter
 
-main.cpp: 
+hamfilter.cpp: 
 
-main.o: main.cpp
+hamfilter.o: hamfilter.cpp
 
-hamfilter: main.o
-	cc -o hamfilter main.o
+hamfilter: hamfilter.o
+	cc -o hamfilter hamfilter.o
 
 clean:
 	rm -f *.o hamfilter
