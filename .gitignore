@@ -27,5 +27,8 @@
 *.out
 *.app
 
-eclipse-workspace
+.DS_Store
+Debug
+.cproject
+.project
 
