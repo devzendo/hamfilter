@@ -14,12 +14,25 @@ using namespace std;
 
 #include <RtAudio.h>
 
-int record(void *outputBuffer, void *inputBuffer, unsigned int nBufferFrames,
+int inout(void *outputBuffer, void *inputBuffer, unsigned int nBufferFrames,
 		double streamTime, RtAudioStreamStatus status, void *userData) {
-	cout << "record callback triggered" << endl;
-	if (status)
-		cout << "Stream overflow detected!" << endl;
-	// Do something with the data in the "inputBuffer" buffer.
+//	cout << "record callback triggered" << endl;
+
+	if (status & RTAUDIO_INPUT_OVERFLOW != 0)
+		cout << "Stream input overflow detected!" << endl;
+	if (status & RTAUDIO_OUTPUT_UNDERFLOW != 0)
+		cout << "Stream output underflow detected!" << endl;
+
+	// If allocate pool buffer OK, copy inputBuffer to it, pass into DSP chain.
+
+	// Try to take from end of DSP chain. If anything available, copy outputBuffer and free.
+	// Else, zero outputBuffer.
+
+	// For now...
+	unsigned long *bytes = (unsigned long *) userData;
+	cout << "obuf " << outputBuffer << " ibuf " << inputBuffer << " nframes " << nBufferFrames
+			<< " userData " << userData << " bytes " << *bytes << endl;
+	memcpy(outputBuffer, inputBuffer, *bytes);
 	return 0;
 }
 
@@ -124,20 +137,35 @@ int main(const int argc, const char *argv[]) {
 		}
 	}
 
-	RtAudio::StreamParameters parameters;
-	parameters.deviceId = inputDevice;
-	parameters.nChannels = 2;
-	parameters.firstChannel = 0;
+	// Initialise buffer management
+	// Initialise DSP thread
+	// Initialise GUI
+
 	unsigned int sampleRate = 44100;
-	unsigned int bufferFrames = 256; // 256 sample frames
+	unsigned int bufferFrames = 512;
+	unsigned int bufferBytes = 0;
+	RtAudio::StreamParameters inputParameters;
+	inputParameters.deviceId = inputDevice;
+	inputParameters.nChannels = 2;
+	inputParameters.firstChannel = 0;
+
+	RtAudio::StreamParameters outputParameters;
+	outputParameters.deviceId = outputDevice;
+	outputParameters.nChannels = 2;
+	outputParameters.firstChannel = 0;
+
 	try {
-		adc.openStream( NULL, &parameters, RTAUDIO_SINT16, sampleRate,
-				&bufferFrames, &record);
+		adc.openStream(&outputParameters, &inputParameters, RTAUDIO_SINT16, sampleRate,
+				&bufferFrames, &inout, &bufferBytes);
 		adc.startStream();
 	} catch (RtAudioError& e) {
 		e.printMessage();
 		exit(0);
 	}
+//	bufferBytes = bufferFrames * 2 * 4;
+
+	cout << "bufferbytes is " << bufferBytes << endl;
+
 	char input;
 	std::cout << "\nRecording ... press <enter> to quit.\n";
 	std::cin.get(input);
