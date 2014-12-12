@@ -58,7 +58,36 @@ void usage() {
 	cout << "Options:" << endl;
 	//       12345678901234567890123456789012345678901234567890123456789012345678901234567890
 	cout << "  -devices        - Shows input/output device details and their ID numbers" << endl;
-	cout << "  -input <id>     - Uses input device <id> as the audio source (see -devices)" << endl;
+	cout << "  -input <id>     - Uses device <id> as the audio input (see -devices)" << endl;
+	cout << "  -output <id>    - Uses device <id> as the audio output (see -devices)" << endl;
+}
+
+void validateDevice(unsigned int deviceId, unsigned int deviceCount, RtAudio& adc, bool input) {
+	if (deviceId >= deviceCount) {
+		cout << "Device ID " << deviceId << " must be less than "
+				<< deviceCount << endl;
+		exit(0);
+	}
+	RtAudio::DeviceInfo info = adc.getDeviceInfo(deviceId);
+	if (!info.probed) {
+		cout << "Could not probe device ID " << deviceId << endl;
+		exit(0);
+	}
+	if (!isCdQuality(info)) {
+		cout << "Device ID " << deviceId << " is not CD quality" << endl;
+		exit(0);
+	}
+	if (input) {
+		if (info.inputChannels == 0) {
+			cout << "Device ID " << deviceId << " has no input channels" << endl;
+			exit(0);
+		}
+	} else {
+		if (info.outputChannels == 0) {
+			cout << "Device ID " << deviceId << " has no output channels" << endl;
+			exit(0);
+		}
+	}
 }
 
 int main(const int argc, const char *argv[]) {
@@ -70,6 +99,7 @@ int main(const int argc, const char *argv[]) {
 	}
 
 	unsigned int inputDevice = adc.getDefaultInputDevice();
+	unsigned int outputDevice = adc.getDefaultOutputDevice();
 	for (int i=0; i<argc; i++) {
 		if (strcmp(argv[i], "-devices") == 0) {
 			// Scan through devices for various capabilities
@@ -82,24 +112,15 @@ int main(const int argc, const char *argv[]) {
 				exit(0);
 			}
 			inputDevice=atoi(argv[++i]);
-			if (inputDevice >= deviceCount) {
-				cout << "Input device ID " << inputDevice << " must be less than " << deviceCount << endl;
+			validateDevice(inputDevice, deviceCount, adc, true);
+		}
+		if (strcmp(argv[i], "-output") == 0) {
+			if (i == argc-1) {
+				usage();
 				exit(0);
 			}
-			RtAudio::DeviceInfo info = adc.getDeviceInfo(inputDevice);
-			if (!info.probed) {
-				cout << "Could not probe device ID " << inputDevice << endl;
-				exit(0);
-			}
-			if (!isCdQuality(info)) {
-				cout << "Device ID " << inputDevice << " is not CD quality" << endl;
-				exit(0);
-			}
-			if (info.inputChannels == 0) {
-				cout << "Device ID " << inputDevice << " has no input channels" << endl;
-				exit(0);
-			}
-
+			outputDevice=atoi(argv[++i]);
+			validateDevice(outputDevice, deviceCount, adc, false);
 		}
 	}
 
