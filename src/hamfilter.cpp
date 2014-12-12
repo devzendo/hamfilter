@@ -17,20 +17,34 @@ int record(void *outputBuffer, void *inputBuffer, unsigned int nBufferFrames,
 		double streamTime, RtAudioStreamStatus status, void *userData) {
 	cout << "record callback triggered" << endl;
 	if (status)
-		std::cout << "Stream overflow detected!" << std::endl;
+		cout << "Stream overflow detected!" << endl;
 	// Do something with the data in the "inputBuffer" buffer.
 	return 0;
 }
 
-int main() {
-	cout << "!!!Hello World!!!" << endl;
-
+int main(const int argc, const char *argv[]) {
 	RtAudio adc;
 	unsigned int deviceCount = adc.getDeviceCount();
-	std::cout << "Audio device count: " << deviceCount << endl;
+	cout << "Audio device count: " << deviceCount << endl;
 	if (deviceCount < 1) {
-		std::cout << "\nNo audio devices found!\n";
+		cout << endl << "No audio devices found!" << endl;
 		exit(0);
+	}
+
+	for (int i=0; i<argc; i++) {
+		if (strcmp(argv[i], "-devices") == 0) {
+			// Scan through devices for various capabilities
+			RtAudio::DeviceInfo info;
+			for (unsigned int i=0; i<deviceCount; i++ ) {
+				info = adc.getDeviceInfo( i );
+				if ( info.probed == true ) {
+					// Print, for example, the maximum number of output channels for each device
+					cout << "device = " << i;
+					cout << ": maximum output channels = " << info.outputChannels << endl;
+				}
+			}
+			exit(0);
+		}
 	}
 	RtAudio::StreamParameters parameters;
 	parameters.deviceId = adc.getDefaultInputDevice();
