@@ -29,12 +29,14 @@ void showDevices(unsigned int deviceCount, RtAudio& adc) {
 		info = adc.getDeviceInfo(i);
 		if (info.probed == true) {
 			// Print, for example, the maximum number of output channels for each device
-			cout << "device = " << i;
-			cout << ": maximum output channels = " << info.outputChannels
-					<< endl;
+			cout << "Device " << i << " '" << info.name << "', ";
+			cout << "max output channels = " << info.outputChannels;
+			cout << (info.isDefaultOutput ? " (default output)" : "");
+			cout << ", max input channels = " << info.inputChannels;
+			cout << (info.isDefaultInput ? " (default input)" : "");
+			cout << endl;
 		}
 	}
-	exit(0);
 }
 
 int main(const int argc, const char *argv[]) {
@@ -50,6 +52,7 @@ int main(const int argc, const char *argv[]) {
 		if (strcmp(argv[i], "-devices") == 0) {
 			// Scan through devices for various capabilities
 			showDevices(deviceCount, adc);
+			exit(0);
 		}
 	}
 	RtAudio::StreamParameters parameters;
