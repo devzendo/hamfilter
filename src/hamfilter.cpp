@@ -7,6 +7,7 @@
 //============================================================================
 
 #include <iostream>
+#include <vector>
 #include <cstdlib>
 #include <cstring>
 using namespace std;
@@ -22,41 +23,88 @@ int record(void *outputBuffer, void *inputBuffer, unsigned int nBufferFrames,
 	return 0;
 }
 
+bool isCdQuality(RtAudio::DeviceInfo info) {
+	bool cdQuality = false;
+	for (unsigned int i=0; i<info.sampleRates.size(); i++) {
+		if (info.sampleRates[i] == 44100) {
+			cdQuality = true;
+			break;
+		}
+	}
+	return cdQuality;
+}
+
 void showDevices(unsigned int deviceCount, RtAudio& adc) {
 	// Scan through devices for various capabilities
 	RtAudio::DeviceInfo info;
 	for (unsigned int i = 0; i < deviceCount; i++) {
 		info = adc.getDeviceInfo(i);
 		if (info.probed == true) {
-			// Print, for example, the maximum number of output channels for each device
 			cout << "Device " << i << " '" << info.name << "', ";
 			cout << "max output channels = " << info.outputChannels;
 			cout << (info.isDefaultOutput ? " (default output)" : "");
 			cout << ", max input channels = " << info.inputChannels;
 			cout << (info.isDefaultInput ? " (default input)" : "");
+			if (isCdQuality(info)) {
+				cout << ", CD quality (44,100 Hz)";
+			}
 			cout << endl;
 		}
 	}
 }
 
+void usage() {
+	cout << "Syntax: hamfilter [options]" << endl;
+	cout << "Options:" << endl;
+	//       12345678901234567890123456789012345678901234567890123456789012345678901234567890
+	cout << "  -devices        - Shows input/output device details and their ID numbers" << endl;
+	cout << "  -input <id>     - Uses input device <id> as the audio source (see -devices)" << endl;
+}
+
 int main(const int argc, const char *argv[]) {
 	RtAudio adc;
 	unsigned int deviceCount = adc.getDeviceCount();
-	cout << "Audio device count: " << deviceCount << endl;
 	if (deviceCount < 1) {
 		cout << endl << "No audio devices found!" << endl;
 		exit(0);
 	}
 
+	unsigned int inputDevice = adc.getDefaultInputDevice();
 	for (int i=0; i<argc; i++) {
 		if (strcmp(argv[i], "-devices") == 0) {
 			// Scan through devices for various capabilities
 			showDevices(deviceCount, adc);
 			exit(0);
 		}
+		if (strcmp(argv[i], "-input") == 0) {
+			if (i == argc-1) {
+				usage();
+				exit(0);
+			}
+			inputDevice=atoi(argv[++i]);
+			if (inputDevice >= deviceCount) {
+				cout << "Input device ID " << inputDevice << " must be less than " << deviceCount << endl;
+				exit(0);
+			}
+			RtAudio::DeviceInfo info = adc.getDeviceInfo(inputDevice);
+			if (!info.probed) {
+				cout << "Could not probe device ID " << inputDevice << endl;
+				exit(0);
+			}
+			if (!isCdQuality(info)) {
+				cout << "Device ID " << inputDevice << " is not CD quality" << endl;
+				exit(0);
+			}
+			if (info.inputChannels == 0) {
+				cout << "Device ID " << inputDevice << " has no input channels" << endl;
+				exit(0);
+			}
+
+		}
 	}
+
 	RtAudio::StreamParameters parameters;
-	parameters.deviceId = adc.getDefaultInputDevice();
+	parameters.deviceId = inputDevice;
 	parameters.nChannels = 2;
 	parameters.firstChannel = 0;
 	unsigned int sampleRate = 44100;
