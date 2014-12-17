@@ -29,10 +29,13 @@ int inout(void *outputBuffer, void *inputBuffer, unsigned int nBufferFrames,
 	// Else, zero outputBuffer.
 
 	// For now...
-	unsigned long *bytes = (unsigned long *) userData;
-	cout << "obuf " << outputBuffer << " ibuf " << inputBuffer << " nframes " << nBufferFrames
-			<< " userData " << userData << " bytes " << *bytes << endl;
-	memcpy(outputBuffer, inputBuffer, *bytes);
+	unsigned int *bytes = (unsigned int *) userData;
+	if (*bytes != 0) {
+	//	cout << "obuf " << outputBuffer << " ibuf " << inputBuffer << " nframes " << nBufferFrames
+	//			<< " userData " << userData << " bytes " << *bytes << endl;
+		memcpy(outputBuffer, inputBuffer, *bytes);
+	}
+
 	return 0;
 }
 
@@ -162,9 +165,17 @@ int main(const int argc, const char *argv[]) {
 		e.printMessage();
 		exit(0);
 	}
-//	bufferBytes = bufferFrames * 2 * 4;
+	// adc.openStream could have adjusted the bufferFrames.
+	// Set the user data buffer to the sample buffer size in bytes, so that the
+	// inout callback function knows how much data to copy. The example code
+	// uses this - 2 is Stereo, 4 is signed int (4 bytes on OSX)
+	bufferBytes = bufferFrames * 2 * 4;
 
-	cout << "bufferbytes is " << bufferBytes << endl;
+	// Can now initialise buffer management. inout could have been asking for
+	// buffers but buffer management won't give them until it has been
+	// initialised.
+
+	cout << "buffer size in bytes is " << bufferBytes << endl;
 
 	char input;
 	std::cout << "\nRecording ... press <enter> to quit.\n";
