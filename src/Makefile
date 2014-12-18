@@ -18,13 +18,22 @@ LDFLAGS=-L/usr/local/lib
 
 all: hamfilter
 
-hamfilter.cpp: 
+
+buffers.cpp: buffers.h
+
+buffers.o: buffers.cpp
+	g++ ${CFLAGS} -c -o buffers.o buffers.cpp
+
+
+hamfilter.cpp: buffers.h
 
 hamfilter.o: hamfilter.cpp
 	g++ ${CFLAGS} -c -o hamfilter.o hamfilter.cpp
 
-hamfilter: hamfilter.o
-	g++ ${LDFLAGS} -o hamfilter hamfilter.o -lrtaudio
+
+hamfilter: hamfilter.o buffers.o
+	g++ ${LDFLAGS} -o hamfilter hamfilter.o buffers.o -lrtaudio
+
 
 clean:
 	rm -f *.o hamfilter

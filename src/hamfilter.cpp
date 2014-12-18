@@ -14,6 +14,14 @@ using namespace std;
 
 #include <RtAudio.h>
 
+#include "buffers.h"
+
+// Constants -------------------------------------------------------------------
+static const int maxBuffers = 20;
+
+// Globals ---------------------------------------------------------------------
+BufferManager *bufferManager = NULL;
+
 int inout(void *outputBuffer, void *inputBuffer, unsigned int nBufferFrames,
 		double streamTime, RtAudioStreamStatus status, void *userData) {
 //	cout << "record callback triggered" << endl;
@@ -22,6 +30,15 @@ int inout(void *outputBuffer, void *inputBuffer, unsigned int nBufferFrames,
 		cout << "Stream input overflow detected!" << endl;
 	if (status & RTAUDIO_OUTPUT_UNDERFLOW != 0)
 		cout << "Stream output underflow detected!" << endl;
+
+	// Can't do anything with the data until the bufferManager is set up.
+	// TODO protect with mutex
+	if (bufferManager == NULL) {
+		return 0;
+	} else {
+		// bufferManager.alloc
+	}
+	// TODO release mutex
 
 	// If allocate pool buffer OK, copy inputBuffer to it, pass into DSP chain.
 
@@ -140,7 +157,6 @@ int main(const int argc, const char *argv[]) {
 		}
 	}
 
-	// Initialise buffer management
 	// Initialise DSP thread
 	// Initialise GUI
 
@@ -174,12 +190,16 @@ int main(const int argc, const char *argv[]) {
 	// Can now initialise buffer management. inout could have been asking for
 	// buffers but buffer management won't give them until it has been
 	// initialised.
-
 	cout << "buffer size in bytes is " << bufferBytes << endl;
+	// TODO protect with mutex
+	bufferManager = new BufferManager(bufferBytes, maxBuffers);
+
 
 	char input;
-	std::cout << "\nRecording ... press <enter> to quit.\n";
-	std::cin.get(input);
+	cout << endl << "Recording ... press <enter> to quit." << endl;
+	cin.get(input);
+	cout << "Terminating" << endl;
+
 	try {
 		// Stop the stream
 		adc.stopStream();
@@ -188,5 +208,12 @@ int main(const int argc, const char *argv[]) {
 	}
 	if (adc.isStreamOpen())
 		adc.closeStream();
+
+	// TODO shut down DSP chain, release all buffers
+	// TODO shut down Display chain, release all buffers
+
+	delete bufferManager;
+
+	cout << "Terminated" << endl;
 	return 0;
 }
