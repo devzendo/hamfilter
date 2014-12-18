@@ -1,10 +1,10 @@
 # Choose one platform
 
 # For Mac OS X 10.7
-#PLATFORM=MACOSX
+PLATFORM=MACOSX
 
 # For Ubuntu, Debian, Mint
-PLATFORM=DEBIAN
+#PLATFORM=DEBIAN
 
 # For Red Hat, Fedora, CentOS
 #PLATFORM=REDHAT
@@ -12,7 +12,7 @@ PLATFORM=DEBIAN
 # For the Raspberry Pi, hurrah!
 #PLATFORM=RASPBIAN
 
-CFLAGS=-Wall -D${PLATFORM} -I/usr/local/include
+CFLAGS=-Wall -D${PLATFORM} -I/usr/local/include -O0 -g3
 LDFLAGS=-L/usr/local/lib
 
 
@@ -21,9 +21,10 @@ all: hamfilter
 hamfilter.cpp: 
 
 hamfilter.o: hamfilter.cpp
+	g++ ${CFLAGS} -c -o hamfilter.o hamfilter.cpp
 
 hamfilter: hamfilter.o
-	cc -o hamfilter hamfilter.o
+	g++ ${LDFLAGS} -o hamfilter hamfilter.o -lrtaudio
 
 clean:
 	rm -f *.o hamfilter
